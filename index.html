@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora ICMS-ST Bling</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    *{box-sizing:border-box}
+    body{font-family:Arial,sans-serif;background:#eef0f3;margin:0;padding:28px;color:#111827}
+    .container{max-width:1280px;margin:auto;background:white;padding:32px;border-radius:16px;box-shadow:0 8px 24px rgba(0,0,0,.08)}
+    h1{text-align:center;margin:0 0 24px;font-size:34px}
+    h2{margin:28px 0 14px;font-size:20px;color:#475569}
+    .alerta{background:#fff7ed;border:1px solid #fed7aa;color:#7c2d12;padding:14px;border-radius:10px;margin-bottom:22px;line-height:1.45}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+    .field{display:flex;flex-direction:column}
+    label{font-weight:700;margin-bottom:7px;font-size:14px;color:#334155}
+    input,select{padding:12px 13px;border:1px solid #cbd5e1;border-radius:9px;font-size:15px;background:white;min-height:44px}
+    input[readonly]{background:#f1f5f9;color:#475569}
+    .inline-field{display:flex;gap:8px;align-items:stretch}
+    .inline-field input{flex:1}
+    .inline-field button{margin:0;min-width:105px;flex:0;padding:10px 12px;font-size:14px}
+    .actions{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap}
+    button{padding:14px 18px;border:none;border-radius:10px;background:#2563eb;color:white;font-size:16px;cursor:pointer;flex:1;min-width:220px}
+    button.secondary{background:#111827} button.ghost{background:#475569}
+    button:hover{filter:brightness(.94)}
+    .status{margin:14px 0 0;font-weight:700}.ok{color:#15803d}.erro{color:#dc2626}
+    .resultado{display:none;margin-top:24px;background:#f8fafc;border:1px solid #dbeafe;padding:22px;border-radius:12px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+    .card{background:white;border:1px solid #e5e7eb;border-radius:10px;padding:13px;min-height:76px}
+    .card span{display:block;color:#64748b;font-size:13px;margin-bottom:5px}.card strong{font-size:18px}.total{font-size:25px;color:#16a34a}.danger{background:#fef2f2;border-color:#fecaca;color:#991b1b}.small{font-size:13px;color:#64748b;line-height:1.45}.linha{height:1px;background:#e5e7eb;margin:24px 0}.check{display:flex;gap:8px;align-items:center;margin-top:10px;color:#475569}.check input{min-height:auto;width:auto}
+    .empresa-box{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;margin-bottom:22px}
+    .empresa-card{background:#f8fafc;border:1px solid #dbeafe;border-radius:14px;padding:18px}
+    .empresa-card h3{margin:0 0 8px;font-size:18px;color:#1e3a8a}
+    .empresa-card p{margin:4px 0;color:#334155;font-size:14px}
+    .empresa-card strong{color:#020617}
+    @media(max-width:800px){.empresa-box{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Calculadora ICMS-ST</h1>
+
+  <div class="empresa-box">
+    <div class="empresa-card">
+      <h3>CADIRIRI</h3>
+      <p><strong>CNPJ:</strong> 09.577.109/0001-60</p>
+      <p><strong>Endereço:</strong> Rua Barão de Monte Santo, 856 - Mooca</p>
+      <p><strong>CEP:</strong> 03123-020</p>
+    </div>
+    <div class="empresa-card">
+      <h3>Cliente</h3>
+      <p><strong>CNPJ:</strong> <span id="clienteCnpjResumo">-</span></p>
+      <p><strong>Empresa:</strong> <span id="clienteNomeResumo">-</span></p>
+      <p class="small">O nome pode ser buscado pelo CNPJ automaticamente. Se não encontrar, preencha manualmente.</p>
+    </div>
+  </div>
+
+  <div class="alerta">
+    <strong>Importante:</strong> o navegador não consegue puxar sozinho uma planilha que está no seu computador. Se abrir esse HTML dando dois cliques, você precisa selecionar o arquivo no campo abaixo. Se quiser carregar automático por nome, deixe o arquivo <strong>SIMULAR-VENDA-ST.xlsx</strong> na mesma pasta e abra por servidor local/Live Server.
+  </div>
+
+  <h2>Dados gerais</h2>
+  <div class="grid">
+    <div class="field"><label>Planilha Excel</label><input type="file" id="arquivoExcel" accept=".xlsx,.xls" /></div>
+    <div class="field"><label>CNPJ do cliente</label><div class="inline-field"><input type="text" id="cnpj" placeholder="00.000.000/0000-00" /><button type="button" onclick="buscarEmpresaPorCNPJ()">Buscar</button></div></div>
+    <div class="field"><label>Nome da empresa / razão social</label><input type="text" id="nomeEmpresa" placeholder="Preenche automático se estiver cadastrado" /></div>
+    <div class="field"><label>Estado destino</label><select id="estado"></select></div>
+    <div class="field"><label>Origem do produto</label><select id="origemProduto"><option value="nacional">Produto nacional</option><option value="importado">Produto importado</option></select></div>
+  </div>
+  <div class="actions">
+    <h2>Itens adicionados</h2>
+
+<div style="overflow:auto">
+  <table id="tabelaItens" style="width:100%;border-collapse:collapse;margin-top:10px">
+    <thead>
+      <tr style="background:#e2e8f0">
+        <th style="padding:10px;border:1px solid #cbd5e1">Produto</th>
+        <th style="padding:10px;border:1px solid #cbd5e1">Qtd</th>
+        <th style="padding:10px;border:1px solid #cbd5e1">Unitário</th>
+        <th style="padding:10px;border:1px solid #cbd5e1">ICMS ST</th>
+        <th style="padding:10px;border:1px solid #cbd5e1">Total</th>
+        <th style="padding:10px;border:1px solid #cbd5e1">Ação</th>
+      </tr>
+    </thead>
+
+    <tbody></tbody>
+  </table>
+</div>
+
+<div class="actions">
+  <button type="button" onclick="adicionarItem()">Adicionar produto</button>
+</div>
+    <button type="button" class="ghost" onclick="tentarCarregarMesmaPasta()">Tentar carregar SIMULAR-VENDA-ST.xlsx da mesma pasta</button>
+  </div>
+
+  <div class="linha"></div>
+  <h2>Item da nota fiscal</h2>
+  <div class="grid">
+    <div class="field"><label>Produto ou serviço</label><input type="text" id="produtoBusca" list="listaProdutos" placeholder="Ex: PRESSOSTATO" /></div>
+    <div class="field"><label>Código do produto</label><input type="text" id="codigoProduto" placeholder="Ex: PRES-K59" /></div>
+    <div class="field"><label>NCM automático</label><input type="text" id="ncm" readonly /></div>
+    <div class="field"><label>CEST</label><input type="text" id="cest" readonly /></div>
+  </div>
+  <datalist id="listaProdutos"></datalist>
+
+  <div class="grid" style="margin-top:16px">
+    <div class="field"><label>Quantidade</label><input type="number" id="quantidade" value="1" min="1" step="1" /></div>
+    <div class="field"><label>Preço un.</label><input type="number" id="valorUnitario" step="0.01" placeholder="0,00" /></div>
+    <div class="field"><label>Valor do frete</label><input type="number" id="frete" value="0" step="0.01" /></div>
+    <div class="field"><label>Valor do seguro</label><input type="number" id="seguro" value="0" step="0.01" /></div>
+    <div class="field"><label>Outras despesas</label><input type="number" id="outras" value="0" step="0.01" /></div>
+    <div class="field"><label>Desconto</label><input type="number" id="desconto" value="0" step="0.01" /></div>
+  </div>
+
+  <label class="check"><input type="checkbox" id="autoCalc" checked /> Cálculo automático ligado</label>
+  <label class="check"><input type="checkbox" id="descontoNaBaseST" checked /> Desconto reduz a Base ICMS ST</label>
+
+  <div class="actions">
+    <button type="button" onclick="calcular()">Calcular</button>
+    <button type="button" class="ghost" onclick="copiarFinanceiro()">Copiar informações para financeiro</button>
+    <button type="button" class="ghost" onclick="gerarPDF()">Gerar PDF</button>
+    <button type="button" class="secondary" onclick="limpar()">Limpar</button>
+  </div>
+  <div id="status" class="status"></div>
+  <div class="resultado" id="resultado"></div>
+</div>
+
+<script>
+let produtosPorNCM = {};
+let produtosLista = [];
+let aliquotasEstados = {};
+let workbookCarregado = false;
+let ultimoProduto = null;
+let ultimoCalculo = null;
+
+const empresaEmitente = {
+  nome: 'CADIRIRI',
+  cnpj: '09.577.109/0001-60',
+  endereco: 'Rua Barão de Monte Santo, 856 - Mooca',
+  cep: '03123-020'
+};
+
+// Cadastre aqui os CNPJs dos clientes que você mais usa.
+// Quando digitar o CNPJ no campo, o nome aparece automático.
+const cadastroEmpresas = {
+  '09577109000160': 'CADIRIRI',
+  '24002186000186': ''
+};
+
+const estados = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'];
+const estados12 = ['MG','PR','RJ','RS','SC'];
+
+const estadoSelect = document.getElementById('estado');
+estados.forEach(uf => { const opt=document.createElement('option'); opt.value=uf; opt.textContent=uf; if(uf==='SP') opt.selected=true; estadoSelect.appendChild(opt); });
+
+function somenteNumeros(valor){ return String(valor || '').replace(/[^0-9]/g,''); }
+function normalizarNCM(valor){ return somenteNumeros(valor); }
+function formatarCNPJ(cnpj){ const s=somenteNumeros(cnpj); return s.length===14 ? s.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/,'$1.$2.$3/$4-$5') : cnpj; }
+function formatarNCM(ncm){ const s=normalizarNCM(ncm); return s.length===8 ? s.replace(/(\d{4})(\d{2})(\d{2})/,'$1.$2.$3') : s; }
+function limparTexto(s){ return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
+function numero(valor){
+  if(valor === null || valor === undefined || valor === '') return 0;
+  if(typeof valor === 'number') return valor;
+  let txt = String(valor).trim().replace('%','');
+  if(txt.includes(',') && txt.includes('.')) txt = txt.replace(/\./g,'').replace(',','.');
+  else if(txt.includes(',')) txt = txt.replace(',','.');
+  const n = parseFloat(txt);
+  return isNaN(n) ? 0 : n;
+}
+function moeda(valor){ return (valor || 0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+function percentual(valor){ return ((valor || 0)*100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2}) + '%'; }
+function setStatus(msg,tipo='ok'){ const el=document.getElementById('status'); el.className='status '+(tipo==='erro'?'erro':'ok'); el.textContent=msg || ''; }
+function atualizarResumoCliente(){
+  const cnpjCampo=document.getElementById('cnpj');
+  const nomeCampo=document.getElementById('nomeEmpresa');
+  const cnpjLimpo=somenteNumeros(cnpjCampo.value);
+  if(cnpjLimpo.length===14) cnpjCampo.value=formatarCNPJ(cnpjLimpo);
+  document.getElementById('clienteCnpjResumo').textContent = cnpjCampo.value || '-';
+  document.getElementById('clienteNomeResumo').textContent = nomeCampo.value || (cnpjLimpo.length===14 ? 'Cliente não cadastrado' : '-');
+}
+
+async function buscarEmpresaPorCNPJ(){
+  const cnpjCampo=document.getElementById('cnpj');
+  const nomeCampo=document.getElementById('nomeEmpresa');
+  const cnpjLimpo=somenteNumeros(cnpjCampo.value);
+
+  if(cnpjLimpo.length !== 14){
+    atualizarResumoCliente();
+    setStatus('Digite um CNPJ com 14 números para buscar a empresa.', 'erro');
+    return;
+  }
+
+  cnpjCampo.value = formatarCNPJ(cnpjLimpo);
+
+  if(cadastroEmpresas[cnpjLimpo]){
+    nomeCampo.value = cadastroEmpresas[cnpjLimpo];
+    atualizarResumoCliente();
+    setStatus('Empresa localizada no cadastro interno.');
+    autoCalcular();
+    return;
+  }
+
+  try{
+    setStatus('Buscando dados do CNPJ...');
+    const resp = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`);
+    if(!resp.ok) throw new Error('CNPJ não encontrado na consulta pública.');
+    const dados = await resp.json();
+    nomeCampo.value = dados.razao_social || dados.nome_fantasia || nomeCampo.value || '';
+    atualizarResumoCliente();
+    setStatus('Empresa preenchida pelo CNPJ.');
+    autoCalcular();
+  }catch(err){
+    atualizarResumoCliente();
+    setStatus('Não consegui buscar esse CNPJ automaticamente. Preencha a razão social manualmente.', 'erro');
+  }
+}
+function cell(row, idx){ return row[idx] ?? ''; }
+
+async function tentarCarregarMesmaPasta(){
+  try{
+    const resp = await fetch('SIMULAR-VENDA-ST.xlsx');
+    if(!resp.ok) throw new Error('Não encontrei o arquivo na mesma pasta. Use o seletor de arquivo.');
+    const buffer = await resp.arrayBuffer();
+    const wb = XLSX.read(buffer, {type:'array'});
+    lerPlanilha(wb);
+    setStatus(`Planilha carregada automaticamente: ${produtosLista.length} produtos encontrados.`);
+    autoCalcular();
+  }catch(err){ setStatus(err.message || 'Não foi possível carregar automático.', 'erro'); }
+}
+
+function lerPlanilha(workbook){
+  produtosPorNCM = {}; produtosLista = []; aliquotasEstados = {};
+  const wsST = workbook.Sheets['ST'];
+  const wsMVA = workbook.Sheets['MVA_OR-ESTADOS'];
+  const wsAliq = workbook.Sheets['ALIQ-ICMS-ESTADOS'];
+  if(!wsST || !wsMVA || !wsAliq) throw new Error('A planilha precisa ter as abas ST, MVA_OR-ESTADOS e ALIQ-ICMS-ESTADOS.');
+  const stRows = XLSX.utils.sheet_to_json(wsST, {header:1, defval:''});
+  const mvaRows = XLSX.utils.sheet_to_json(wsMVA, {header:1, defval:''});
+  const aliqRows = XLSX.utils.sheet_to_json(wsAliq, {header:1, defval:''});
+
+  aliqRows.forEach(r => { const uf=String(cell(r,0)).trim().toUpperCase(); if(estados.includes(uf)) aliquotasEstados[uf]=numero(cell(r,1))/100; });
+
+  const headerMVA = mvaRows[1] || [];
+  const mapaColEstado = {};
+  headerMVA.forEach((h,i) => { const uf=String(h||'').trim().toUpperCase(); if(estados.includes(uf)) mapaColEstado[uf]=i; });
+
+  for(let i=2;i<stRows.length;i++){
+    const r = stRows[i];
+    const ncm = normalizarNCM(cell(r,0));
+    const descricao = String(cell(r,2)||'').trim();
+    if(!ncm || ncm.length<7 || !descricao) continue;
+    if(produtosPorNCM[ncm]) continue;
+    produtosPorNCM[ncm] = {
+      ncm, ncmFormatado:formatarNCM(ncm),
+      cest:String(cell(r,1)||'').trim(), descricao,
+      observacao:String(cell(r,4)||'').trim(),
+      aliquotaSP:numero(cell(r,5)),
+      mvaSP:numero(cell(r,6)),
+      mvaEstados:{}
+    };
+  }
+
+  for(let i=2;i<mvaRows.length;i++){
+    const r = mvaRows[i];
+    const ncm = normalizarNCM(cell(r,0));
+    if(!ncm || !produtosPorNCM[ncm]) continue;
+    estados.forEach(uf => {
+      const col = mapaColEstado[uf];
+      const val = col !== undefined ? numero(cell(r,col)) : 0;
+      produtosPorNCM[ncm].mvaEstados[uf] = val / 100;
+    });
+  }
+
+  produtosLista = Object.values(produtosPorNCM).sort((a,b)=>a.descricao.localeCompare(b.descricao));
+  preencherDatalist(); workbookCarregado = true;
+}
+
+function preencherDatalist(){
+  const lista=document.getElementById('listaProdutos'); lista.innerHTML='';
+  produtosLista.forEach(p=>{ const opt=document.createElement('option'); opt.value=`${p.descricao} | ${p.ncmFormatado}`; lista.appendChild(opt); });
+}
+
+document.getElementById('arquivoExcel').addEventListener('change', async function(e){
+  const file=e.target.files[0]; if(!file) return;
+  try{ const buffer=await file.arrayBuffer(); const wb=XLSX.read(buffer,{type:'array'}); lerPlanilha(wb); setStatus(`Planilha carregada: ${produtosLista.length} produtos encontrados.`); autoCalcular(); }
+  catch(err){ console.error(err); setStatus(err.message || 'Erro ao carregar a planilha.', 'erro'); }
+});
+
+function localizarProduto(){
+  const buscaRaw=document.getElementById('produtoBusca').value;
+  const busca=limparTexto(buscaRaw);
+  const ncmDigitado=normalizarNCM(buscaRaw);
+  let produto=null;
+  if(ncmDigitado && produtosPorNCM[ncmDigitado]) produto=produtosPorNCM[ncmDigitado];
+  if(!produto && busca){
+    produto = produtosLista.find(p => {
+      const desc=limparTexto(p.descricao);
+      return busca.includes(limparTexto(p.ncmFormatado)) || busca.includes(p.ncm) || desc.includes(busca) || busca.includes(desc);
+    });
+  }
+  if(produto){
+    ultimoProduto=produto;
+    document.getElementById('ncm').value=produto.ncmFormatado;
+    document.getElementById('cest').value=produto.cest || '';
+  }
+  return produto;
+}
+
+function aliquotaInterestadual(origem, uf){
+  if(uf==='SP') return null;
+  if(origem==='importado') return 0.04;
+  return estados12.includes(uf) ? 0.12 : 0.07;
+}
+function calcularMVAajustada(mvaOriginal, aliqInter, aliqDestino){
+  if(!mvaOriginal || !aliqDestino) return 0;
+  return (((1 + mvaOriginal) * (1 - aliqInter)) / (1 - aliqDestino)) - 1;
+}
+function arred2(v){ return Math.round((v + Number.EPSILON) * 100) / 100; }
+
+  let itensNota = [];
+
+function adicionarItem(){
+
+  if(!workbookCarregado){
+    setStatus('Carregue a planilha primeiro.', 'erro');
+    return;
+  }
+
+  const produto = localizarProduto();
+
+  if(!produto){
+    setStatus('Produto não encontrado.', 'erro');
+    return;
+  }
+
+  const uf = document.getElementById('estado').value;
+  const origem = document.getElementById('origemProduto').value;
+
+  const valorUnit = numero(document.getElementById('valorUnitario').value);
+
+  const qtd = numero(document.getElementById('quantidade').value) || 1;
+
+  const valorProdutos = valorUnit * qtd;
+
+  let aliqPropria = 0;
+  let aliqDestino = 0;
+  let mvaOriginal = 0;
+  let mvaUtilizada = 0;
+
+  if(uf === 'SP'){
+
+    aliqPropria = produto.aliquotaSP || 0;
+
+    aliqDestino = aliqPropria;
+
+    mvaOriginal = produto.mvaSP || 0;
+
+    mvaUtilizada = mvaOriginal;
+
+  }else{
+
+    aliqPropria = aliquotaInterestadual(origem, uf);
+
+    aliqDestino = aliquotasEstados[uf] || 0;
+
+    mvaOriginal = produto.mvaEstados[uf] || 0;
+
+    mvaUtilizada = calcularMVAajustada(
+      mvaOriginal,
+      aliqPropria,
+      aliqDestino
+    );
+  }
+
+  const icmsProprio = valorProdutos * aliqPropria;
+
+  const baseST = valorProdutos * (1 + mvaUtilizada);
+
+  let icmsST = (baseST * aliqDestino) - icmsProprio;
+
+  if(icmsST < 0){
+    icmsST = 0;
+  }
+
+  const total = valorProdutos + icmsST;
+
+  itensNota.push({
+    produto: produto.descricao,
+    qtd,
+    valorUnit,
+    icmsST,
+    total
+  });
+
+  renderizarTabela();
+
+  setStatus('Produto adicionado na nota.');
+}
+
+function renderizarTabela(){
+
+  const tbody = document.querySelector('#tabelaItens tbody');
+
+  tbody.innerHTML = '';
+
+  let totalNota = 0;
+
+  let totalST = 0;
+
+  itensNota.forEach((item, index)=>{
+
+    totalNota += item.total;
+
+    totalST += item.icmsST;
+
+    tbody.innerHTML += `
+      <tr>
+
+        <td style="padding:10px;border:1px solid #cbd5e1">
+          ${item.produto}
+        </td>
+
+        <td style="padding:10px;border:1px solid #cbd5e1">
+          ${item.qtd}
+        </td>
+
+        <td style="padding:10px;border:1px solid #cbd5e1">
+          ${moeda(item.valorUnit)}
+        </td>
+
+        <td style="padding:10px;border:1px solid #cbd5e1">
+          ${moeda(item.icmsST)}
+        </td>
+
+        <td style="padding:10px;border:1px solid #cbd5e1">
+          ${moeda(item.total)}
+        </td>
+
+        <td style="padding:10px;border:1px solid #cbd5e1">
+
+          <button onclick="removerItem(${index})">
+
+            Remover
+
+          </button>
+
+        </td>
+
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML += `
+    <tr style="background:#dcfce7;font-weight:bold">
+
+      <td colspan="3"
+          style="padding:10px;border:1px solid #cbd5e1">
+
+          TOTAL GERAL
+
+      </td>
+
+      <td style="padding:10px;border:1px solid #cbd5e1">
+
+        ${moeda(totalST)}
+
+      </td>
+
+      <td style="padding:10px;border:1px solid #cbd5e1">
+
+        ${moeda(totalNota)}
+
+      </td>
+
+      <td style="padding:10px;border:1px solid #cbd5e1"></td>
+
+    </tr>
+  `;
+}
+
+function removerItem(index){
+
+  itensNota.splice(index, 1);
+
+  renderizarTabela();
+}
+
+function calcular(){
+  if(!workbookCarregado){ setStatus('Carregue a planilha Excel antes de calcular.', 'erro'); return; }
+  atualizarResumoCliente();
+  const produto=localizarProduto();
+  if(!produto){ setStatus('Produto/NCM não encontrado na planilha. Tente digitar só PRESSOSTATO ou o NCM 9032.20.00.', 'erro'); return; }
+
+  const uf=document.getElementById('estado').value;
+  const origem=document.getElementById('origemProduto').value;
+  const valorUnit=numero(document.getElementById('valorUnitario').value);
+  const qtd=numero(document.getElementById('quantidade').value) || 1;
+  const frete=numero(document.getElementById('frete').value);
+  const seguro=numero(document.getElementById('seguro').value);
+  const outras=numero(document.getElementById('outras').value);
+  const desconto=numero(document.getElementById('desconto').value);
+  const descontoNaBaseST=document.getElementById('descontoNaBaseST').checked;
+
+  const clienteCnpj=document.getElementById('cnpj').value || '-';
+  const clienteNome=document.getElementById('nomeEmpresa').value || '-';
+  const codigoProduto=document.getElementById('codigoProduto').value || '-';
+
+  const valorProdutos = valorUnit * qtd;
+  const baseICMS = Math.max(0, valorProdutos + frete + seguro + outras - desconto);
+  const baseParaST = Math.max(0, valorProdutos + frete + seguro + outras - (descontoNaBaseST ? desconto : 0));
+
+  let aliqPropria=0, aliqDestino=0, mvaOriginal=0, mvaUtilizada=0, icmsProprio=0, baseST=0, icmsST=0, tipoCalculo='';
+  if(uf==='SP'){
+    tipoCalculo='Venda para SP — usando alíquota e MVA da aba ST';
+    aliqPropria=produto.aliquotaSP || 0;
+    aliqDestino=aliqPropria;
+    mvaOriginal=produto.mvaSP || 0;
+    mvaUtilizada=mvaOriginal;
+  }else{
+    tipoCalculo=origem==='importado' ? 'Venda interestadual — produto importado' : 'Venda interestadual — produto nacional';
+    aliqPropria=aliquotaInterestadual(origem,uf);
+    aliqDestino=aliquotasEstados[uf] || 0;
+    mvaOriginal=produto.mvaEstados[uf] || 0;
+    mvaUtilizada=calcularMVAajustada(mvaOriginal, aliqPropria, aliqDestino);
+  }
+
+  const temST = mvaUtilizada > 0 && aliqDestino > 0 && aliqPropria !== null;
+  icmsProprio = arred2(baseICMS * aliqPropria);
+  baseST = temST ? arred2(baseParaST * (1 + mvaUtilizada)) : 0;
+  icmsST = temST ? arred2((baseST * aliqDestino) - icmsProprio) : 0;
+  if(icmsST < 0) icmsST = 0;
+  const total = arred2(valorProdutos + frete + seguro + outras - desconto + icmsST);
+
+  ultimoCalculo = {
+    data: new Date().toLocaleString('pt-BR'), clienteCnpj, clienteNome, codigoProduto,
+    produto: produto.descricao, ncm: produto.ncmFormatado, cest: produto.cest || '-', uf, origem,
+    qtd, valorUnit, valorProdutos, frete, seguro, outras, desconto,
+    baseICMS, aliqPropria, icmsProprio, mvaOriginal, mvaUtilizada, baseST, icmsST, total, tipoCalculo
+  };
+
+  const avisoST = temST ? '' : '<div class="card danger"><span>Status ST</span><strong>NÃO TEM ST / MVA zerada na planilha</strong></div>';
+  document.getElementById('resultado').style.display='block';
+  document.getElementById('resultado').innerHTML = `
+    <h2>${produto.descricao}</h2>
+    <p class="small">${tipoCalculo}</p>
+    <div class="cards">
+      <div class="card"><span>CNPJ cliente</span><strong>${clienteCnpj}</strong></div>
+      <div class="card"><span>Empresa cliente</span><strong>${clienteNome}</strong></div>
+      <div class="card"><span>Código</span><strong>${codigoProduto}</strong></div>
+      <div class="card"><span>NCM</span><strong>${produto.ncmFormatado}</strong></div>
+      <div class="card"><span>CEST</span><strong>${produto.cest || '-'}</strong></div>
+      <div class="card"><span>Total dos produtos</span><strong>${moeda(valorProdutos)}</strong></div>
+      <div class="card"><span>Valor do frete</span><strong>${moeda(frete)}</strong></div>
+      <div class="card"><span>Valor do seguro</span><strong>${moeda(seguro)}</strong></div>
+      <div class="card"><span>Outras despesas</span><strong>${moeda(outras)}</strong></div>
+      <div class="card"><span>Desconto</span><strong>${moeda(desconto)}</strong></div>
+      <div class="card"><span>Base ICMS</span><strong>${moeda(baseICMS)}</strong></div>
+      <div class="card"><span>Alíquota ICMS</span><strong>${percentual(aliqPropria)}</strong></div>
+      <div class="card"><span>Valor ICMS</span><strong>${moeda(icmsProprio)}</strong></div>
+      <div class="card"><span>MVA original</span><strong>${percentual(mvaOriginal)}</strong></div>
+      <div class="card"><span>MVA usada</span><strong>${percentual(mvaUtilizada)}</strong></div>
+      <div class="card"><span>Base ICMS ST</span><strong>${moeda(baseST)}</strong></div>
+      <div class="card"><span>Valor ICMS ST</span><strong>${moeda(icmsST)}</strong></div>
+      ${avisoST}
+      <div class="card"><span>Total da nota</span><strong class="total">${moeda(total)}</strong></div>
+    </div>
+    <p class="small"><strong>Conferência do seu exemplo:</strong> PRESSOSTATO 9032.20.00 em SP, produto R$ 1.400, frete R$ 0 e desconto R$ 0 deve dar Base ST R$ 2.410,10, ICMS R$ 168,00, ICMS-ST R$ 121,21 e Total R$ 1.521,21.</p>
+  `;
+  setStatus('Cálculo atualizado com os dados da planilha.');
+}
+
+function autoCalcular(){ if(document.getElementById('autoCalc').checked && workbookCarregado) { try{ calcular(); }catch(e){} } }
+['produtoBusca','estado','origemProduto','valorUnitario','quantidade','frete','seguro','outras','desconto','descontoNaBaseST','nomeEmpresa'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', autoCalcular);
+  document.getElementById(id).addEventListener('change', autoCalcular);
+});
+
+document.getElementById('produtoBusca').addEventListener('input', localizarProduto);
+document.getElementById('cnpj').addEventListener('input', atualizarEmpresaPorCNPJ);
+document.getElementById('cnpj').addEventListener('change', () => { atualizarResumoCliente(); autoCalcular(); });
+
+
+function textoFinanceiro(){
+  if(!ultimoCalculo) calcular();
+  if(!ultimoCalculo) return '';
+  const c=ultimoCalculo;
+  return `DADOS PARA EMISSÃO DA NOTA
+
+CLIENTE
+Razão social: ${c.clienteNome}
+CNPJ: ${c.clienteCnpj}
+UF destino: ${c.uf}
+
+ITEM
+Produto: ${c.produto}
+Código: ${c.codigoProduto}
+NCM: ${c.ncm}
+CEST: ${c.cest}
+Quantidade: ${c.qtd}
+Preço unitário: ${moeda(c.valorUnit)}
+Total dos produtos: ${moeda(c.valorProdutos)}
+
+VALORES DA NOTA
+Frete: ${moeda(c.frete)}
+Seguro: ${moeda(c.seguro)}
+Outras despesas: ${moeda(c.outras)}
+Desconto: ${moeda(c.desconto)}
+Total da nota: ${moeda(c.total)}
+
+IMPOSTOS
+Base ICMS: ${moeda(c.baseICMS)}
+Alíquota ICMS: ${percentual(c.aliqPropria)}
+Valor ICMS: ${moeda(c.icmsProprio)}
+MVA usada: ${percentual(c.mvaUtilizada)}
+Base ICMS ST: ${moeda(c.baseST)}
+Valor ICMS ST: ${moeda(c.icmsST)}
+
+Emitente: ${empresaEmitente.nome} - CNPJ ${empresaEmitente.cnpj}`;
+}
+
+async function copiarFinanceiro(){
+  try{
+    const texto=textoFinanceiro();
+    if(!texto) return;
+    await navigator.clipboard.writeText(texto);
+    setStatus('Informações copiadas para o financeiro.');
+  }catch(err){
+    const area=document.createElement('textarea');
+    area.value=textoFinanceiro();
+    document.body.appendChild(area); area.select(); document.execCommand('copy'); area.remove();
+    setStatus('Informações copiadas.');
+  }
+}
+
+async function gerarPDF(){
+  if(!ultimoCalculo) calcular();
+  if(!ultimoCalculo) return;
+  const c = ultimoCalculo;
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF('p','mm','a4');
+  const pageW = pdf.internal.pageSize.getWidth();
+  const margem = 14;
+  let y = 16;
+
+  function money(v){ return moeda(v); }
+  function txt(label, value, x, yy){
+    pdf.setFont('helvetica','normal'); pdf.setTextColor(75,85,99); pdf.setFontSize(8); pdf.text(label, x, yy);
+    pdf.setFont('helvetica','bold'); pdf.setTextColor(17,24,39); pdf.setFontSize(10); pdf.text(String(value || '-'), x, yy+5);
+  }
+  function box(x, yy, w, h, title){
+    pdf.setDrawColor(226,232,240); pdf.setFillColor(248,250,252); pdf.roundedRect(x, yy, w, h, 3, 3, 'FD');
+    pdf.setTextColor(30,58,138); pdf.setFont('helvetica','bold'); pdf.setFontSize(10); pdf.text(title, x+4, yy+7);
+  }
+  function row(label, value, x1, x2, yy, bold=false){
+    pdf.setFont('helvetica', bold ? 'bold' : 'normal'); pdf.setTextColor(55,65,81); pdf.setFontSize(9); pdf.text(label, x1, yy);
+    pdf.setFont('helvetica', 'bold'); pdf.setTextColor(17,24,39); pdf.text(String(value), x2, yy, {align:'right'});
+  }
+
+  // Cabeçalho
+  pdf.setFillColor(15,23,42);
+  pdf.rect(0, 0, pageW, 30, 'F');
+  pdf.setTextColor(255,255,255);
+  pdf.setFont('helvetica','bold');
+  pdf.setFontSize(19);
+  pdf.text('CADIRIRI', margem, 13);
+  pdf.setFontSize(10);
+  pdf.text('Simulação ICMS-ST', margem, 21);
+  pdf.setFont('helvetica','normal');
+  pdf.text(`Gerado em ${c.data}`, pageW-margem, 13, {align:'right'});
+
+  y = 38;
+  box(margem, y, 86, 34, 'Emitente');
+  txt('Empresa', empresaEmitente.nome, margem+4, y+14);
+  txt('CNPJ', empresaEmitente.cnpj, margem+4, y+25);
+  pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(75,85,99);
+  pdf.text(`${empresaEmitente.endereco} - CEP ${empresaEmitente.cep}`, margem+42, y+30, {maxWidth:42});
+
+  box(108, y, 88, 34, 'Cliente');
+  txt('Razão social', c.clienteNome, 112, y+14);
+  txt('CNPJ', c.clienteCnpj, 112, y+25);
+  txt('UF destino', c.uf, 170, y+25);
+
+  y += 44;
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(12); pdf.setTextColor(17,24,39);
+  pdf.text('Item da nota fiscal', margem, y);
+  y += 7;
+
+  pdf.setFillColor(241,245,249); pdf.setDrawColor(226,232,240);
+  pdf.roundedRect(margem, y, pageW-(margem*2), 25, 2, 2, 'FD');
+  txt('Produto', c.produto, margem+4, y+8);
+  txt('Código', c.codigoProduto, margem+4, y+19);
+  txt('NCM', c.ncm, 78, y+19);
+  txt('CEST', c.cest, 112, y+19);
+  txt('Qtde', c.qtd, 148, y+19);
+  txt('Preço un.', money(c.valorUnit), 165, y+19);
+
+  y += 36;
+  pdf.setFont('helvetica','bold'); pdf.setFontSize(12); pdf.setTextColor(17,24,39);
+  pdf.text('Resumo para emissão', margem, y);
+  y += 8;
+
+  const leftX = margem, rightX = 108, boxW = 88, boxH = 70;
+  box(leftX, y, boxW, boxH, 'Valores da nota');
+  let ly = y+18;
+  row('Produtos', money(c.valorProdutos), leftX+5, leftX+boxW-5, ly); ly+=8;
+  row('Frete', money(c.frete), leftX+5, leftX+boxW-5, ly); ly+=8;
+  row('Seguro', money(c.seguro), leftX+5, leftX+boxW-5, ly); ly+=8;
+  row('Outras despesas', money(c.outras), leftX+5, leftX+boxW-5, ly); ly+=8;
+  row('Desconto', money(c.desconto), leftX+5, leftX+boxW-5, ly); ly+=10;
+  pdf.setDrawColor(226,232,240); pdf.line(leftX+5, ly-5, leftX+boxW-5, ly-5);
+  row('TOTAL DA NOTA', money(c.total), leftX+5, leftX+boxW-5, ly, true);
+
+  box(rightX, y, boxW, boxH, 'Impostos');
+  let ry = y+18;
+  row('Base ICMS', money(c.baseICMS), rightX+5, rightX+boxW-5, ry); ry+=8;
+  row('Alíquota ICMS', percentual(c.aliqPropria), rightX+5, rightX+boxW-5, ry); ry+=8;
+  row('Valor ICMS', money(c.icmsProprio), rightX+5, rightX+boxW-5, ry); ry+=8;
+  row('MVA usada', percentual(c.mvaUtilizada), rightX+5, rightX+boxW-5, ry); ry+=8;
+  row('Base ICMS ST', money(c.baseST), rightX+5, rightX+boxW-5, ry); ry+=8;
+  row('Valor ICMS ST', money(c.icmsST), rightX+5, rightX+boxW-5, ry, true);
+
+  y += 84;
+  pdf.setFillColor(220,252,231); pdf.setDrawColor(187,247,208);
+  pdf.roundedRect(margem, y, pageW-(margem*2), 18, 3, 3, 'FD');
+  pdf.setTextColor(22,101,52); pdf.setFont('helvetica','bold'); pdf.setFontSize(13);
+  pdf.text(`Total da nota: ${money(c.total)}`, margem+6, y+11);
+  pdf.setTextColor(75,85,99); pdf.setFont('helvetica','normal'); pdf.setFontSize(8);
+  pdf.text('Documento de conferência interna. Valores simulados com base na planilha importada.', margem, 285);
+
+  const nome = `simulacao-icms-st-${(c.codigoProduto || 'produto').replace(/[^a-z0-9]/gi,'-')}.pdf`;
+  pdf.save(nome);
+  setStatus('PDF bonito gerado.');
+}
+
+function limpar(){
+  ['cnpj','nomeEmpresa','produtoBusca','codigoProduto','ncm','cest','valorUnitario','frete','seguro','outras','desconto'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('clienteCnpjResumo').textContent='-'; document.getElementById('clienteNomeResumo').textContent='-'; ultimoCalculo=null;
+  document.getElementById('quantidade').value=1; document.getElementById('resultado').style.display='none'; setStatus(workbookCarregado ? 'Planilha continua carregada.' : '');
+}
+</script>
+</body>
+</html>

@@ -714,6 +714,7 @@ const totalNota = itens.reduce((s,i)=>s+i.total,0);
   txt('Razão social', c.clienteNome, 112, y+14);
   txt('CNPJ', c.clienteCnpj, 112, y+25);
   txt('UF destino', c.uf, 170, y+25);
+  txt('Pagamento', c.modoPagamento, 112, y+31);
 
   y += 44;
   pdf.setFont('helvetica','bold'); pdf.setFontSize(12); pdf.setTextColor(17,24,39);

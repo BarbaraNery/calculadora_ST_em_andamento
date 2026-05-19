@@ -555,7 +555,7 @@ function calcular(){
   const total = arred2(valorProdutos + frete + seguro + outras - desconto + icmsST);
 
   ultimoCalculo = {
-    data: new Date().toLocaleString('pt-BR'), clienteCnpj, clienteNome, codigoProduto,
+    data: new Date().toLocaleString('pt-BR'), clienteCnpj, clienteNome, codigoProduto, modoPagamento,
     produto: produto.descricao, ncm: produto.ncmFormatado, cest: produto.cest || '-', uf, origem,
     qtd, valorUnit, valorProdutos, frete, seguro, outras, desconto,
     baseICMS, aliqPropria, icmsProprio, mvaOriginal, mvaUtilizada, baseST, icmsST, total, tipoCalculo

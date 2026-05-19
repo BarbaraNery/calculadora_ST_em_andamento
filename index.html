@@ -725,7 +725,7 @@ const totalNota = itens.reduce((s,i)=>s+i.total,0);
   pdf.setFillColor(241,245,249); pdf.setDrawColor(226,232,240);
   pdf.roundedRect(margem, y, pageW-(margem*2), 25, 2, 2, 'FD');
   txt('Produto', c.produto, margem+4, y+8);
-  txt('Código', c.codigoProduto, margem+4, y+19);
+  txt('Descrição', c.codigoProduto, margem+4, y+19);
   txt('NCM', c.ncm, 78, y+19);
   txt('CEST', c.cest, 112, y+19);
   txt('Qtde', c.qtd, 148, y+19);

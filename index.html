@@ -711,13 +711,13 @@ const totalNota = itens.reduce((s,i)=>s+i.total,0);
   pdf.setFont('helvetica','normal'); pdf.setFontSize(8); pdf.setTextColor(75,85,99);
   pdf.text(`${empresaEmitente.endereco} - CEP ${empresaEmitente.cep}`, margem+42, y+30, {maxWidth:42});
 
-  box(108, y, 88, 34, 'Cliente');
+  box(108, y, 88, 42, 'Cliente');
   txt('Razão social', c.clienteNome, 112, y+14);
   txt('CNPJ', c.clienteCnpj, 112, y+25);
   txt('UF destino', c.uf, 170, y+25);
   txt('Pagamento', c.modoPagamento, 112, y+31);
 
-  y += 44;
+  y += 52;
   pdf.setFont('helvetica','bold'); pdf.setFontSize(12); pdf.setTextColor(17,24,39);
   pdf.text('Item da nota fiscal', margem, y);
   y += 7;

@@ -109,7 +109,7 @@
 
   <div class="field">
   <label>Modo de pagamento</label>
-  <select id="modoPagamento">
+  <select id="modoPagamento" onchange="mostrarDDL()">
     <option value="À vista">À vista</option>
     <option value="Transferência">Transferência</option>
     <option value="Pix">Pix</option>
@@ -975,25 +975,17 @@ function limpar(){
   document.getElementById('quantidade').value=1; document.getElementById('resultado').style.display='none'; setStatus(workbookCarregado ? 'Planilha continua carregada.' : '');
 }
 
-  function atualizarCampoDDL(){
-  const modo = document.getElementById('modoPagamento');
-  const campoDDL = document.getElementById('campoDDL');
+ function mostrarDDL(){
+  const modo = document.getElementById('modoPagamento').value;
+  const campo = document.getElementById('campoDDL');
 
-  if(modo.value === 'Faturado'){
-    campoDDL.style.display = 'block';
+  if(modo === 'Faturado'){
+    campo.style.display = 'block';
   }else{
-    campoDDL.style.display = 'none';
+    campo.style.display = 'none';
     document.getElementById('ddlFaturado').value = '';
   }
 }
-
-document.getElementById('modoPagamento').addEventListener('change', function(){
-  atualizarCampoDDL();
-  autoCalcular();
-});
-
-atualizarCampoDDL();
-  
 </script>
 </body>
 </html>

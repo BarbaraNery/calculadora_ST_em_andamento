@@ -975,20 +975,24 @@ function limpar(){
   document.getElementById('quantidade').value=1; document.getElementById('resultado').style.display='none'; setStatus(workbookCarregado ? 'Planilha continua carregada.' : '');
 }
 
- window.addEventListener('DOMContentLoaded', () => {
+  function atualizarCampoDDL(){
+  const modo = document.getElementById('modoPagamento');
+  const campoDDL = document.getElementById('campoDDL');
 
-  document.getElementById('modoPagamento').addEventListener('change', function(){
+  if(modo.value === 'Faturado'){
+    campoDDL.style.display = 'block';
+  }else{
+    campoDDL.style.display = 'none';
+    document.getElementById('ddlFaturado').value = '';
+  }
+}
 
-    const campoDDL = document.getElementById('campoDDL');
+document.getElementById('modoPagamento').addEventListener('change', function(){
+  atualizarCampoDDL();
+  autoCalcular();
+});
 
-    if(this.value === 'Faturado'){
-      campoDDL.style.display = 'block';
-    }else{
-      campoDDL.style.display = 'none';
-      document.getElementById('ddlFaturado').value = '';
-    }
-
-    autoCalcular();
+atualizarCampoDDL();
 
   });
 

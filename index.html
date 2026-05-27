@@ -118,6 +118,11 @@
   </select>
 </div>
 
+  <div class="field" id="campoDDL" style="display:none;margin-top:12px">
+  <label>Faturado em quantos DDL?</label>
+  <input type="number" id="ddlFaturado" placeholder="Ex: 28, 30, 45, 60" min="1">
+</div>
+
   <div class="actions">
  
 </div>
@@ -960,6 +965,21 @@ function limpar(){
   document.getElementById('clienteCnpjResumo').textContent='-'; document.getElementById('clienteNomeResumo').textContent='-'; ultimoCalculo=null;
   document.getElementById('quantidade').value=1; document.getElementById('resultado').style.display='none'; setStatus(workbookCarregado ? 'Planilha continua carregada.' : '');
 }
+
+  document.getElementById('modoPagamento').addEventListener('change', function(){
+  const campoDDL = document.getElementById('campoDDL');
+
+  if(this.value === 'Faturado'){
+    campoDDL.style.display = 'flex';
+  }else{
+    campoDDL.style.display = 'none';
+    document.getElementById('ddlFaturado').value = '';
+  }
+
+  autoCalcular();
+});
+
+  
 </script>
 </body>
 </html>

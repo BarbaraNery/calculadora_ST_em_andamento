@@ -765,7 +765,7 @@ const totalNota = itens.reduce((s,i)=>s+i.total,0);
   pdf.text(`${empresaEmitente.endereco} - CEP ${empresaEmitente.cep}`, margem+42, y+30, {maxWidth:42});
 
 
-  box(108, y, 88, 42, 'Cliente');
+  box(108, y, 88, 50, 'Cliente');
 
 // Razão social
 pdf.setFont('helvetica','normal');
@@ -780,13 +780,13 @@ const clienteNomeLinhas = pdf.splitTextToSize(String(c.clienteNome || '-'), 72);
 pdf.text(clienteNomeLinhas.slice(0, 2), 112, y+19);
 
 // CNPJ
-txt('CNPJ', c.clienteCnpj, 112, y+31);
+txt('CNPJ', c.clienteCnpj, 112, y+34);
 
 // UF
-txt('UF destino', c.uf, 170, y+31);
+txt('UF destino', c.uf, 170, y+34);
 
 // Pagamento
-txt('Pagamento', c.modoPagamento, 112, y+37);
+txt('Pagamento', c.modoPagamento, 112, y+43);
 
 
 
@@ -794,7 +794,7 @@ txt('Pagamento', c.modoPagamento, 112, y+37);
 
   
 
-  y += 52;
+  y += 60;
   pdf.setFont('helvetica','bold'); pdf.setFontSize(12); pdf.setTextColor(17,24,39);
   pdf.text('Item da nota fiscal', margem, y);
   y += 7;

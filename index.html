@@ -675,8 +675,13 @@ function calcular(){
 
 function autoCalcular(){ if(document.getElementById('autoCalc').checked && workbookCarregado) { try{ calcular(); }catch(e){} } }
 ['produtoBusca','estado','origemProduto','valorUnitario','quantidade','frete','seguro','outras','desconto','descontoNaBaseST','nomeEmpresa'].forEach(id=>{
-  document.getElementById(id).addEventListener('input', autoCalcular);
-  document.getElementById(id).addEventListener('change', autoCalcular);
+  document.getElementById(id).addEventListener('input', () => {
+    calcular();
+  });
+
+  document.getElementById(id).addEventListener('change', () => {
+    calcular();
+  });
 });
 
 document.getElementById('produtoBusca').addEventListener('input', localizarProduto);

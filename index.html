@@ -781,16 +781,45 @@ const totalNota = itens.reduce((s,i)=>s+i.total,0);
   pdf.text('Item da nota fiscal', margem, y);
   y += 7;
 
-  pdf.setFillColor(241,245,249); pdf.setDrawColor(226,232,240);
-  pdf.roundedRect(margem, y, pageW-(margem*2), 25, 2, 2, 'FD');
-  txt('Produto', c.produto, margem+4, y+8);
-  txt('Descrição', c.codigoProduto, margem+4, y+19);
-  txt('NCM', c.ncm, 78, y+19);
-  txt('CEST', c.cest, 112, y+19);
-  txt('Qtde', c.qtd, 148, y+19);
-  txt('Preço un.', money(c.valorUnit), 165, y+19);
+  pdf.setFillColor(241,245,249);
+pdf.setDrawColor(226,232,240);
 
-  y += 36;
+const itemBoxH = 42;
+pdf.roundedRect(margem, y, pageW-(margem*2), itemBoxH, 2, 2, 'FD');
+
+// Produto
+pdf.setFont('helvetica','normal');
+pdf.setTextColor(75,85,99);
+pdf.setFontSize(8);
+pdf.text('Produto', margem+4, y+7);
+
+pdf.setFont('helvetica','bold');
+pdf.setTextColor(17,24,39);
+pdf.setFontSize(10);
+const produtoLinhas = pdf.splitTextToSize(String(c.produto || '-'), 175);
+pdf.text(produtoLinhas.slice(0, 2), margem+4, y+12);
+
+// Descrição do item
+pdf.setFont('helvetica','normal');
+pdf.setTextColor(75,85,99);
+pdf.setFontSize(8);
+pdf.text('Descrição do item', margem+4, y+25);
+
+pdf.setFont('helvetica','bold');
+pdf.setTextColor(17,24,39);
+pdf.setFontSize(9);
+const descLinhas = pdf.splitTextToSize(String(c.codigoProduto || '-'), 72);
+pdf.text(descLinhas.slice(0, 2), margem+4, y+30);
+
+// Demais campos
+txt('NCM', c.ncm, 92, y+25);
+txt('CEST', c.cest, 122, y+25);
+txt('Qtde', c.qtd, 150, y+25);
+txt('Preço un.', money(c.valorUnit), 166, y+25);
+
+y += itemBoxH + 12;
+
+
   pdf.setFont('helvetica','bold'); pdf.setFontSize(12); pdf.setTextColor(17,24,39);
   pdf.text('Resumo para emissão', margem, y);
   y += 8;

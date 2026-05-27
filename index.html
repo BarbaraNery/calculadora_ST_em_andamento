@@ -579,8 +579,15 @@ function calcular(){
   const clienteCnpj=document.getElementById('cnpj').value || '-';
   const clienteNome=document.getElementById('nomeEmpresa').value || '-';
   const codigoProduto=document.getElementById('codigoProduto').value || '-';
-  const modoPagamento=document.getElementById('modoPagamento').value || '-';
+  const modoPagamentoBase = document.getElementById('modoPagamento').value || '-';
+  const ddlFaturado = document.getElementById('ddlFaturado')?.value || '';
 
+  const modoPagamento =
+  modoPagamentoBase === 'Faturado' && ddlFaturado
+    ? `Faturado - ${ddlFaturado} DDL`
+    : modoPagamentoBase;
+
+  
   const valorProdutos = valorUnit * qtd;
   const baseICMS = Math.max(0, valorProdutos + frete + seguro + outras - desconto);
   const baseParaST = Math.max(0, valorProdutos + frete + seguro + outras - (descontoNaBaseST ? desconto : 0));

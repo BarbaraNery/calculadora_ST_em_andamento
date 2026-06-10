@@ -835,41 +835,42 @@ txt('Pagamento', c.modoPagamento, 112, y+43);
   pdf.text('Item da nota fiscal', margem, y);
   y += 7;
 
-  pdf.setFillColor(241,245,249);
-pdf.setDrawColor(226,232,240);
+ const itemBoxH = 18 + (itens.length * 10);
 
-const itemBoxH = 42;
 pdf.roundedRect(margem, y, pageW-(margem*2), itemBoxH, 2, 2, 'FD');
 
-// Produto
-pdf.setFont('helvetica','normal');
-pdf.setTextColor(75,85,99);
-pdf.setFontSize(8);
-pdf.text('Produto', margem+4, y+7);
-
 pdf.setFont('helvetica','bold');
-pdf.setTextColor(17,24,39);
-pdf.setFontSize(10);
-const produtoLinhas = pdf.splitTextToSize(String(c.produto || '-'), 175);
-pdf.text(produtoLinhas.slice(0, 2), margem+4, y+12);
-
-// Descrição do item
-pdf.setFont('helvetica','normal');
-pdf.setTextColor(75,85,99);
 pdf.setFontSize(8);
-pdf.text('Descrição do item', margem+4, y+25);
-
-pdf.setFont('helvetica','bold');
 pdf.setTextColor(17,24,39);
-pdf.setFontSize(9);
-const descLinhas = pdf.splitTextToSize(String(c.codigoProduto || '-'), 72);
-pdf.text(descLinhas.slice(0, 2), margem+4, y+30);
 
-// Demais campos
-txt('NCM', c.ncm, 92, y+25);
-txt('CEST', c.cest, 122, y+25);
-txt('Qtde', c.qtd, 150, y+25);
-txt('Preço un.', money(c.valorUnit), 166, y+25);
+pdf.text('Produto', margem+4, y+8);
+pdf.text('Descrição', 78, y+8);
+pdf.text('NCM', 118, y+8);
+pdf.text('Qtd', 143, y+8);
+pdf.text('Unit.', 157, y+8);
+pdf.text('Total', 192, y+8, {align:'right'});
+
+pdf.setDrawColor(226,232,240);
+pdf.line(margem+4, y+11, pageW-margem-4, y+11);
+
+let itemY = y + 18;
+
+itens.forEach((item) => {
+  pdf.setFont('helvetica','normal');
+  pdf.setFontSize(8);
+  pdf.setTextColor(17,24,39);
+
+  const produtoLinhas = pdf.splitTextToSize(String(item.produto || '-'), 58);
+  pdf.text(produtoLinhas.slice(0, 1), margem+4, itemY);
+
+  pdf.text(String(item.codigoProduto || '-'), 78, itemY);
+  pdf.text(String(item.ncm || '-'), 118, itemY);
+  pdf.text(String(item.qtd || '-'), 143, itemY);
+  pdf.text(money(item.valorUnit), 157, itemY);
+  pdf.text(money(item.total), 192, itemY, {align:'right'});
+
+  itemY += 10;
+});
 
 y += itemBoxH + 12;
 

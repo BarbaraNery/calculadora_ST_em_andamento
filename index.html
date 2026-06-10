@@ -584,11 +584,14 @@ function calcular(){
   const modoPagamentoBase = document.getElementById('modoPagamento').value || '-';
   const ddlFaturado = document.getElementById('ddlFaturado')?.value || '';
 
-  const modoPagamento =
+ let modoPagamento =
   modoPagamentoBase === 'Faturado' && ddlFaturado
     ? `Faturado - ${ddlFaturado} DDL`
     : modoPagamentoBase;
 
+if (modoPagamentoBase === 'À vista') {
+  modoPagamento = 'À vista : Cartão Físico até 3x; Pix ou Dinheiro';
+}
   
   const valorProdutos = valorUnit * qtd;
   const baseICMS = Math.max(0, valorProdutos + frete + seguro + outras - desconto);

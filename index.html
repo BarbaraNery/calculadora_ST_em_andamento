@@ -836,7 +836,9 @@ txt('Pagamento', c.modoPagamento, 112, y+43);
   y += 7;
 
  const itemBoxH = 18 + (itens.length * 10);
-
+  
+pdf.setFillColor(241,245,249);
+pdf.setDrawColor(226,232,240);
 pdf.roundedRect(margem, y, pageW-(margem*2), itemBoxH, 2, 2, 'FD');
 
 pdf.setFont('helvetica','bold');

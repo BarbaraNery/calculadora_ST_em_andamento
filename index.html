@@ -753,10 +753,10 @@ async function gerarPDF(){
   const itens = itensAdicionados.length ? itensAdicionados : [ultimoCalculo];
 
 const totalProdutos = itens.reduce((s,i)=>s+i.valorProdutos,0);
-const totalFrete = itens.reduce((s,i)=>s+i.frete,0);
-const totalSeguro = itens.reduce((s,i)=>s+i.seguro,0);
-const totalOutras = itens.reduce((s,i)=>s+i.outras,0);
-const totalDesconto = itens.reduce((s,i)=>s+i.desconto,0);
+const totalFrete = numero(document.getElementById('frete').value);
+const totalSeguro = numero(document.getElementById('seguro').value);
+const totalOutras = numero(document.getElementById('outras').value);
+const totalDesconto = numero(document.getElementById('desconto').value);
 const totalICMS = itens.reduce((s,i)=>s+i.icmsProprio,0);
 const totalST = itens.reduce((s,i)=>s+i.icmsST,0);
 const totalNota = itens.reduce((s,i)=>s+i.total,0);

@@ -595,7 +595,7 @@ if (modoPagamentoBase === 'À vista') {
   
   const valorProdutos = valorUnit * qtd;
   const baseICMS = Math.max(0, valorProdutos + frete + seguro + outras - desconto);
-  const baseParaST = Math.max(0, valorProdutos + frete + seguro + outras - (descontoNaBaseST ? desconto : 0));
+  const baseParaST = Math.max(0, valorProdutos + frete + seguro + outras);
 
   let aliqPropria=0, aliqDestino=0, mvaOriginal=0, mvaUtilizada=0, icmsProprio=0, baseST=0, icmsST=0, tipoCalculo='';
   if(uf==='SP'){
